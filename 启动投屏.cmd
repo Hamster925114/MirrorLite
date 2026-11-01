@@ -1,102 +1,127 @@
-<<<<<<< HEAD
-ï»¿@echo off
-chcp 65001 >nul
+@echo off
 setlocal
 cd /d "%~dp0"
-title MirrorLite å®‰å“ USB æŠ•å±ï¼ˆæ¼”ç¤ºç‰ˆï¼‰
+title MirrorLite 1.0 °²×¿ USB Í¶ÆÁ
 
 echo ============================================================
-echo   MirrorLite  -  å®‰å“ USB æŠ•å±ï¼ˆæ¼”ç¤ºç‰ˆï¼‰
+echo   MirrorLite 1.0  -  °²×¿ USB Í¶ÆÁ
 echo ============================================================
 echo.
 
-if not exist "%~dp0mirror.exe" (
-  echo [é”™è¯¯] æ‰¾ä¸åˆ° mirror.exeï¼Œè¯·æŠŠæœ¬æ–‡ä»¶æ”¾åœ¨æ¼”ç¤ºåŒ…ç›®å½•é‡Œè¿è¡Œã€‚
-  pause
-  exit /b 1
-)
-if not exist "%~dp0adb.exe" (
-  echo [é”™è¯¯] æ‰¾ä¸åˆ° adb.exeï¼Œæ¼”ç¤ºåŒ…éœ€è¦ä¿æŒå®Œæ•´ï¼Œä¸è¦å•ç‹¬æ‹·è´ mirror.exeã€‚
-  pause
-  exit /b 1
-)
+if not exist "%~dp0mirror.exe" goto :noexe
+if not exist "%~dp0adb.exe" goto :noadb
 
-echo æ­£åœ¨æ£€æŸ¥è®¾å¤‡...
+rem adb »á°ÑÈÕÖ¾Ð´µ½ %%TEMP%%\adb.log¡£ÄÇ¸öÎÄ¼þÒ»µ©²»¿ÉÐ´£¨±»¹ÜÀíÔ±»ò±ðµÄÕË»§
+rem ´´½¨¹ý¡¢ACL »µÁË£©£¬adb Á¬ÊØ»¤½ø³Ì¶¼Æð²»À´£¬±¨ cannot open ... Permission denied¡£
+rem ËùÒÔÕâÀï°Ñ TEMP/TMP Ö¸µ½°üÄÚµÄ¿ÉÐ´Ä¿Â¼£¬adb ºÍËüÀ­ÆðµÄ daemon ¶¼¼Ì³ÐÕâ¸öÉèÖÃ¡£
+if not exist "%~dp0adb-tmp" mkdir "%~dp0adb-tmp"
+set "TMP=%~dp0adb-tmp"
+set "TEMP=%~dp0adb-tmp"
+
+"%~dp0adb.exe" version >nul 2>&1
+if errorlevel 1 goto :adb_broken
+
+rem ÊØ»¤½ø³Ì½»¸ø¿ØÖÆÌ¨³ÌÐòÀ´À­£¬±ÈÔÚ GUI ½ø³ÌÀïÀ­¸üÎÈ¡£
+"%~dp0adb.exe" start-server >nul 2>&1
+
+set /a tries=0
+
+:retry
 "%~dp0adb.exe" devices 2>nul | findstr /r /c:"device$" >nul
-if errorlevel 1 (
-  echo.
-  echo [æ²¡æœ‰æ£€æµ‹åˆ°å·²æŽˆæƒçš„å®‰å“è®¾å¤‡]
-  echo   1. ç”¨ USB æ•°æ®çº¿è¿žæŽ¥æ‰‹æœºï¼ˆä¸æ˜¯åªèƒ½å……ç”µçš„çº¿ï¼‰
-  echo   2. æ‰‹æœºè®¾ç½®é‡Œæ‰“å¼€ã€Œå¼€å‘è€…é€‰é¡¹ã€-ã€ŒUSB è°ƒè¯•ã€
-  echo   3. æ‰‹æœºå¼¹å‡ºã€Œå…è®¸ USB è°ƒè¯•å—ã€æ—¶ç‚¹ã€Œå…è®¸ã€
-  echo   4. å°ç±³/OPPO/vivo è¿˜è¦æ‰“å¼€ã€ŒUSB è°ƒè¯•ï¼ˆå®‰å…¨è®¾ç½®ï¼‰ã€
-  echo.
-  echo æ”¹å¥½åŽé‡æ–°åŒå‡»æœ¬æ–‡ä»¶ã€‚
-  pause
-  exit /b 1
-)
+if not errorlevel 1 goto :start
+set /a tries+=1
+if %tries% geq 12 goto :nodevice
+echo ÕýÔÚµÈ´ýÉè±¸¾ÍÐ÷...£¨µÚ %tries% ´ÎÖØÊÔ£©
+"%~dp0adb.exe" start-server >nul 2>&1
+ping -n 2 127.0.0.1 >nul
+goto :retry
 
-echo è®¾å¤‡å·²å°±ç»ªï¼Œæ­£åœ¨å¯åŠ¨æŠ•å±çª—å£...
-echo æç¤ºï¼šçª—å£é‡Œå¯ä»¥ç›´æŽ¥ç”¨é¼ æ ‡ç‚¹å‡»ã€æ‹–åŠ¨ã€æ»šè½®æ“ä½œæ‰‹æœºã€‚
-echo       F11 å…¨å±ï¼ŒF1 æ˜¾ç¤º/éšè—å·¦ä¸Šè§’ä¿¡æ¯ï¼ŒEsc é€€å‡ºã€‚
+:start
+echo Éè±¸ÒÑ¾ÍÐ÷£¬ÕýÔÚÆô¶¯Í¶ÆÁ´°¿Ú...
+echo ÌáÊ¾£º´°¿ÚÀï¿ÉÒÔÖ±½ÓÓÃÊó±êµã»÷¡¢ÍÏ¶¯¡¢¹öÂÖ²Ù×÷ÊÖ»ú¡£
+echo       F11 È«ÆÁ£¬F1 ÏÔÊ¾/Òþ²Ø×óÉÏ½ÇÐÅÏ¢£¬Esc ÍË³ö¡£
 echo.
-mirror.exe --launch
-set "CODE=%ERRORLEVEL%"
-if not "%CODE%"=="0" (
-  echo.
-  echo [æŠ•å±å·²é€€å‡ºï¼Œé€€å‡ºç  %CODE%]
-  echo å¦‚æžœçª—å£é‡Œæç¤ºè¿žæŽ¥å¤±è´¥ï¼Œå¤šåŠæ˜¯æ‰‹æœºé”å±äº†ï¼šç‚¹äº®å±å¹•åŽé‡æ–°åŒå‡»æœ¬æ–‡ä»¶ã€‚
-  pause
-)
-=======
-ï»¿@echo off
-chcp 65001 >nul
-setlocal
-cd /d "%~dp0"
-title MirrorLite å®‰å“ USB æŠ•å±ï¼ˆæ¼”ç¤ºç‰ˆï¼‰
-
-echo ============================================================
-echo   MirrorLite  -  å®‰å“ USB æŠ•å±ï¼ˆæ¼”ç¤ºç‰ˆï¼‰
-echo ============================================================
+rem mirror.exe ÊÇ GUI ³ÌÐò£¬Ö±½Óµ÷ÓÃ cmd ²»»áµÈ´ý£¬½Å±¾Ò»½áÊø¿ØÖÆÌ¨¾Í¹Ø£¬
+rem ½ø³Ì»á±»Ò»Æð´ø×ß£¨±íÏÖÎªË«»÷ºóÒ»ÉÁ¶ø¹ý£©¡£ÓÃ start /wait ÈÃËüµÈµ½µ×¡£
+start "" /wait "%~dp0mirror.exe" --launch
 echo.
+echo Í¶ÆÁÒÑÍË³ö£¨ÍË³öÂë %ERRORLEVEL%£©¡£
+echo Èç¹û´°¿ÚÀïÌáÊ¾Á¬½ÓÊ§°Ü£¬¶à°ëÊÇÊÖ»úËøÆÁÁË£ºµãÁÁÆÁÄ»ºóÖØÐÂË«»÷±¾ÎÄ¼þ¡£
+goto :end
 
-if not exist "%~dp0mirror.exe" (
-  echo [é”™è¯¯] æ‰¾ä¸åˆ° mirror.exeï¼Œè¯·æŠŠæœ¬æ–‡ä»¶æ”¾åœ¨æ¼”ç¤ºåŒ…ç›®å½•é‡Œè¿è¡Œã€‚
-  pause
-  exit /b 1
-)
-if not exist "%~dp0adb.exe" (
-  echo [é”™è¯¯] æ‰¾ä¸åˆ° adb.exeï¼Œæ¼”ç¤ºåŒ…éœ€è¦ä¿æŒå®Œæ•´ï¼Œä¸è¦å•ç‹¬æ‹·è´ mirror.exeã€‚
-  pause
-  exit /b 1
-)
-
-echo æ­£åœ¨æ£€æŸ¥è®¾å¤‡...
-"%~dp0adb.exe" devices 2>nul | findstr /r /c:"device$" >nul
-if errorlevel 1 (
-  echo.
-  echo [æ²¡æœ‰æ£€æµ‹åˆ°å·²æŽˆæƒçš„å®‰å“è®¾å¤‡]
-  echo   1. ç”¨ USB æ•°æ®çº¿è¿žæŽ¥æ‰‹æœºï¼ˆä¸æ˜¯åªèƒ½å……ç”µçš„çº¿ï¼‰
-  echo   2. æ‰‹æœºè®¾ç½®é‡Œæ‰“å¼€ã€Œå¼€å‘è€…é€‰é¡¹ã€-ã€ŒUSB è°ƒè¯•ã€
-  echo   3. æ‰‹æœºå¼¹å‡ºã€Œå…è®¸ USB è°ƒè¯•å—ã€æ—¶ç‚¹ã€Œå…è®¸ã€
-  echo   4. å°ç±³/OPPO/vivo è¿˜è¦æ‰“å¼€ã€ŒUSB è°ƒè¯•ï¼ˆå®‰å…¨è®¾ç½®ï¼‰ã€
-  echo.
-  echo æ”¹å¥½åŽé‡æ–°åŒå‡»æœ¬æ–‡ä»¶ã€‚
-  pause
-  exit /b 1
-)
-
-echo è®¾å¤‡å·²å°±ç»ªï¼Œæ­£åœ¨å¯åŠ¨æŠ•å±çª—å£...
-echo æç¤ºï¼šçª—å£é‡Œå¯ä»¥ç›´æŽ¥ç”¨é¼ æ ‡ç‚¹å‡»ã€æ‹–åŠ¨ã€æ»šè½®æ“ä½œæ‰‹æœºã€‚
-echo       F11 å…¨å±ï¼ŒF1 æ˜¾ç¤º/éšè—å·¦ä¸Šè§’ä¿¡æ¯ï¼ŒEsc é€€å‡ºã€‚
+:nodevice
+"%~dp0adb.exe" devices -l > "%~dp0Õï¶ÏÐÅÏ¢.txt" 2>&1
 echo.
-mirror.exe --launch
-set "CODE=%ERRORLEVEL%"
-if not "%CODE%"=="0" (
-  echo.
-  echo [æŠ•å±å·²é€€å‡ºï¼Œé€€å‡ºç  %CODE%]
-  echo å¦‚æžœçª—å£é‡Œæç¤ºè¿žæŽ¥å¤±è´¥ï¼Œå¤šåŠæ˜¯æ‰‹æœºé”å±äº†ï¼šç‚¹äº®å±å¹•åŽé‡æ–°åŒå‡»æœ¬æ–‡ä»¶ã€‚
-  pause
-)
->>>>>>> 204ad6a (The Test Version)
+echo [Ã»ÓÐ¼ì²âµ½ÒÑÊÚÈ¨µÄ°²×¿Éè±¸]
+echo.
+echo ÏÂÃæÊÇ adb ÏÖÔÚ¿´µ½µÄ¶«Î÷£¨Ò²´æ½øÁË Õï¶ÏÐÅÏ¢.txt£©£º
+echo ------------------------------------------------------------
+type "%~dp0Õï¶ÏÐÅÏ¢.txt"
+echo ------------------------------------------------------------
+echo.
+findstr /i /c:"unauthorized" "%~dp0Õï¶ÏÐÅÏ¢.txt" >nul
+if not errorlevel 1 goto :hint_unauth
+findstr /i /c:"offline" "%~dp0Õï¶ÏÐÅÏ¢.txt" >nul
+if not errorlevel 1 goto :hint_offline
+findstr /i /c:"Permission denied" "%~dp0Õï¶ÏÐÅÏ¢.txt" >nul
+if not errorlevel 1 goto :hint_permdenied
+findstr /i /c:"failed to start daemon" "%~dp0Õï¶ÏÐÅÏ¢.txt" >nul
+if not errorlevel 1 goto :hint_daemon
+findstr /i /c:"no permissions" "%~dp0Õï¶ÏÐÅÏ¢.txt" >nul
+if not errorlevel 1 goto :hint_perm
+goto :hint_empty
+
+:hint_unauth
+echo Ô­Òò£ºÊÖ»ú»¹Ã»ÊÚÈ¨ÕâÌ¨µçÄÔ¡£
+echo   ¿´ÊÖ»úÆÁÄ»£¬µã¡¸ÔÊÐí USB µ÷ÊÔ¡¹£¨¹´ÉÏ¡¸Ò»ÂÉÔÊÐí¡¹¸üÊ¡ÊÂ£©¡£
+echo   Èç¹ûÊÖ»úÃ»µ¯´°£º¿ª·¢ÕßÑ¡ÏîÀïµãÒ»ÏÂ¡¸³·Ïú USB µ÷ÊÔÊÚÈ¨¡¹£¬ÔÙÖØÐÂ²åÏß¡£
+goto :end
+
+:hint_offline
+echo Ô­Òò£ºÉè±¸ÏÔÊ¾ offline£¬Í¨³£ÊÇ adb ×´Ì¬¿¨×¡ÁË¡£
+echo   ÖØÐÂ²åÒ»´ÎÊý¾ÝÏß£¬»òÕßÖØÆôÊÖ»úµÄ¡¸USB µ÷ÊÔ¡¹¿ª¹Ø¡£
+goto :end
+
+:hint_permdenied
+echo Ô­Òò£ºadb ÎÞ·¨Ð´ÈÕÖ¾ÎÄ¼þ£¬ÊØ»¤½ø³ÌÆð²»À´£¨¾ÍÊÇÕâÌõ Permission denied£©¡£
+echo   ±¾½Å±¾ÒÑ¾­°Ñ TEMP Ö¸µ½°üÄÚÄ¿Â¼£¬Èç¹û»¹±¨´í£¬ËµÃ÷°ü·ÅÔÚÖ»¶ÁÎ»ÖÃ£¬
+echo   Çë°ÑÕû¸öÎÄ¼þ¼Ð¿½µ½×ÀÃæ»ò D ÅÌÔÙÔËÐÐ¡£
+goto :end
+
+:hint_daemon
+echo Ô­Òò£ºadb ÊØ»¤½ø³ÌÆð²»À´£¬³£¼ûÊÇ 5037 ¶Ë¿Ú±»±ðµÄ adb/ÊÖ»úÖúÊÖÕ¼ÓÃ¡£
+echo   ¹ØµôÊÖ»úÖúÊÖ¡¢ÆäËüÍ¶ÆÁÈí¼þºóÖØÊÔ£»»¹²»ÐÐ¾ÍÖØÆôµçÄÔ¡£
+goto :end
+
+:hint_perm
+echo Ô­Òò£ºWindows Ã»ÓÐÄÃµ½ USB Éè±¸È¨ÏÞ¡£
+echo   »»Ò»¸ö USB ¿Ú£¨ÓÅÏÈÖ÷°åºóÖÃ¿Ú£©£¬»ò»»Ò»¸ùÊý¾ÝÏßÊÔÊÔ¡£
+goto :end
+
+:hint_empty
+echo Ô­Òò£ºadb ÍêÈ«Ã»¿´µ½ÊÖ»ú¡£°´Ë³Ðò¼ì²é£º
+echo   1. Êý¾ÝÏßÊÇ²»ÊÇÖ»ÄÜ³äµçµÄÏß£¨»»Ò»¸ùÄÜ´«ÎÄ¼þµÄ£©
+echo   2. ÊÖ»ú¡¸¿ª·¢ÕßÑ¡Ïî¡¹-¡¸USB µ÷ÊÔ¡¹ÊÇ·ñ´ò¿ª
+echo   3. ²åÏßºóÊÖ»úÍ¨ÖªÀ¸µÄ USB ÓÃÍ¾Ñ¡¡¸´«ÊäÎÄ¼þ / MTP¡¹
+echo   4. ¹ØµôÊÖ»úÖúÊÖ¡¢ÆäËüÍ¶ÆÁÈí¼þ£¨ËüÃÇ»áÇÀÕ¼ adb£©
+echo   5. Ð¡Ã×/OPPO/vivo »¹Òª´ò¿ª¡¸USB µ÷ÊÔ£¨°²È«ÉèÖÃ£©¡¹
+goto :end
+
+:noexe
+echo [´íÎó] ÕÒ²»µ½ mirror.exe£¬Çë°Ñ±¾ÎÄ¼þ·ÅÔÚ³ÌÐòÄ¿Â¼ÀïÔËÐÐ¡£
+goto :end
+
+:noadb
+echo [´íÎó] ÕÒ²»µ½ adb.exe£¬³ÌÐòÐèÒª±£³ÖÄ¿Â¼ÍêÕû£¬²»Òªµ¥¶À¿½±´ mirror.exe¡£
+goto :end
+
+:adb_broken
+echo [´íÎó] adb.exe ÎÞ·¨ÔËÐÐ¡£
+echo   ¶à°ëÊÇÑ¹Ëõ°üÃ»½âÑ¹ÍêÕû£ºÇë°ÑÕû¸ö zip ½âÑ¹µ½Ò»¸öÆÕÍ¨ÎÄ¼þ¼ÐÔÙË«»÷£¬
+echo   ²»ÒªÖ±½ÓÔÚÑ¹Ëõ°üÀïË«»÷ÔËÐÐ¡£
+goto :end
+
+:end
+echo.
+pause
 endlocal
